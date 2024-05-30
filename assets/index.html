@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>bEmu</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel="stylesheet" href="index.css" />
+</head>
+<body>
+    <div class="container">
+        <div class="left">
+            <canvas id="canvas"></canvas>
+        </div>
+        <div class="right">
+            <div class="row">
+                <input type="file" id="input" webkitdirectory directory multiple />
+                <button id="button" onclick="document.getElementById('input').click()">Selecione o diretório das ROMs</button>
+            </div>
+            <div class="row">
+                <select id="files" size="2"></select>
+            </div>
+        </div>
+    </div>
+    <script src='index.js' type="module"></script>
+</body>
+</html>

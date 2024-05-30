@@ -1,0 +1,27 @@
+{
+  "name": "bemu",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "npx webpack serve --config webpack.config.cjs",
+    "prd": "npx webpack serve --config webpack.prd.config.cjs",
+    "build": "npx webpack --config webpack.prd.config.cjs"
+  },
+  "author": "Bruno Morais",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "copy-webpack-plugin": "^12.0.2",
+    "nodemon": "^3.1.0",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3",
+    "webpack": "^5.90.2",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.0.2"
+  },
+  "dependencies": {
+    "webpack-merge": "^5.10.0"
+  }
+}
