@@ -9,7 +9,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="left center">
+        <div class="left center" id="panel-left">
             <div class="full">
                 <canvas id="canvas"></canvas>
             </div>
@@ -17,9 +17,9 @@
         <div class="right center">
             <div class="row">
                 <div class="half">
-                    <input type="file" id="input" multiple />
+                    <input type="file" id="input" multiple accept=".zip, .ch8" />
                     <button id="roms" onclick="document.getElementById('input').click()">
-                        Selecionar jogos
+                        Selecionar
                     </button>
                 </div>
                 <div class="half">
@@ -28,7 +28,7 @@
             </div>
             <div class="row">
                 <div class="half">
-                    <button id="pause">Pausar/Continuar</button>
+                    <button id="pause">Pausar</button>
                 </div>
                 <div class="half">
                     <button id="reset">Reiniciar</button>

@@ -8,31 +8,35 @@ export class Canvas {
     constructor() {
         this.canvas = document.getElementById("canvas") as HTMLCanvasElement;
         this.context = this.canvas.getContext("2d") as CanvasRenderingContext2D;
-        this.context.fillStyle = "black";
-        this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        // this.context.fillStyle = "black";
+        // this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
     public resize(width : number, height : number) {
-
-        const ratio = width / height;
-
+        
         this.canvas.width = width;
         this.canvas.height = height;
 
-        if (ratio > 1.0) {
-            this.canvas.style.width = "100%";
-            this.canvas.style.height = `${(this.canvas.getBoundingClientRect().width / ratio)}px`;
-        } else {
-            const height = window.innerHeight - 50;
-            this.canvas.style.height = height + "px";
-            this.canvas.style.width = `${(height * ratio)}px`;
-        }
+        const ratio = width / height;
+        const wh = window.innerHeight;
+        const panelLeft = (document.getElementById("panel-left") as HTMLDivElement)
+            .getBoundingClientRect();
+
+        const maxWidth = panelLeft.width - 60;
+        const maxHeight = wh - 60;
+
+        let desW = Math.min(maxHeight * ratio, maxWidth);
+        let desH = Math.min(maxWidth / ratio, maxHeight);
+
+        this.canvas.style.width = desW + "px";
+        this.canvas.style.height = desH + "px";
     }
 
-    public draw(frame: Framebuffer) {
-
-        const imageData = new ImageData(new Uint8ClampedArray(frame.data), frame.width, frame.height);
-        this.context.imageSmoothingEnabled = false;
-        this.context.putImageData(imageData, 0, 0);
+    public draw(frame: Framebuffer) {        
+        this.context.putImageData(
+            new ImageData(
+                new Uint8ClampedArray(frame.data), frame.width, frame.height
+            ), 0, 0
+        );
     }
 }

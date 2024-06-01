@@ -91,6 +91,12 @@ class App {
             
             filesElement.add(option);
         }
+        
+        filesElement.selectedIndex = 0;
+
+        if (App.fileList.length === 1) {
+            this.onROMSelect();
+        }
     }
 
     private static run() {
