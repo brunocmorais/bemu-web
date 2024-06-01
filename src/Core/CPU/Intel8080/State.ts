@@ -1,5 +1,6 @@
 import { LittleEndian } from "../../Util/LittleEndian";
 import { Flags } from "./Flags";
+import { Ports } from "./Ports";
 
 
 export class State {
@@ -14,7 +15,9 @@ export class State {
     public h: number;
     public l: number;
     public flags: Flags;
+    public ports: Ports;
     public enableInterrupts: boolean;
+    public halted: boolean;
 
     constructor() {
         this.pc = 0;
@@ -27,7 +30,25 @@ export class State {
         this.h = 0;
         this.l = 0;
         this.flags = new Flags();
+        this.ports = new Ports();
         this.enableInterrupts = false;
+        this.halted = false;
+    }
+
+    public reset() {
+        this.pc = 0;
+        this.sp = 0;
+        this.a = 0;
+        this.b = 0;
+        this.c = 0;
+        this.d = 0;
+        this.e = 0;
+        this.h = 0;
+        this.l = 0;
+        this.flags = new Flags();
+        this.ports = new Ports();
+        this.enableInterrupts = false;
+        this.halted = false;
     }
 
     public get bc() {

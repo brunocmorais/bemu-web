@@ -1,5 +1,7 @@
 import { ISystem } from "../Core/System/ISystem";
 import { Chip8 } from "./Chip8/Chip8";
+import { ROMReader } from "./SpaceInvaders/ROMReader";
+import { SpaceInvaders } from "./SpaceInvaders/SpaceInvaders";
 import { SystemType } from "./SystemType";
 
 
@@ -12,13 +14,16 @@ export const supportedExtensions = Object.keys(systemTypesByExtension);
 
 export class SystemFactory {
 
-    public static get(extension : string, rom : Uint8Array) : ISystem {
+    public static async get(extension : string, file : Uint8Array) : Promise<ISystem> {
 
         const type = this.getType(extension);
 
         switch (type) {
-            case SystemType.Chip8: return new Chip8(rom);
-            case SystemType.SpaceInvaders: throw new Error();
+            case SystemType.Chip8: 
+                return new Chip8(file);
+            case SystemType.SpaceInvaders: 
+                const rom = await ROMReader.read(file);
+                return new SpaceInvaders(rom);
             default: throw new Error();
         }
     }

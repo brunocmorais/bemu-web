@@ -3,18 +3,15 @@ import { ScaledPixel } from "./ScaledPixel";
 
 export class Framebuffer {
 
-    private readonly _data: number[];
-    private readonly _width: number;
-    private readonly _height: number;
+    protected readonly _data: number[];
+    protected readonly _width: number;
+    protected readonly _height: number;
 
     constructor(width: number, height: number) {
         this._width = width;
         this._height = height;
         this._data = new Array<number>(width * height * 4).fill(0);
-
-        for (let i = 0; i < this.width; i++)
-            for (let j = 0; j < this.height; j++)
-                this.set(i, j, new Pixel(0xFF));
+        this.clear();
     }
 
     public get data() {
@@ -30,6 +27,12 @@ export class Framebuffer {
     }
 
     private getIndex = (x: number, y: number) => (y * this.width * 4) + (x * 4);
+
+    public clear() {
+        for (let i = 0; i < this.width; i++)
+            for (let j = 0; j < this.height; j++)
+                this.set(i, j, new Pixel(0xFF));
+    }
 
     public get(x: number, y: number) {
         const start = this.getIndex(x, y);

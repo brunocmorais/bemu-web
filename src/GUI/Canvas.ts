@@ -23,8 +23,9 @@ export class Canvas {
             this.canvas.style.width = "100%";
             this.canvas.style.height = `${(this.canvas.getBoundingClientRect().width / ratio)}px`;
         } else {
-            this.canvas.style.height = "100%";
-            this.canvas.style.width = `${(this.canvas.getBoundingClientRect().height / ratio)}px`;
+            const height = window.innerHeight - 50;
+            this.canvas.style.height = height + "px";
+            this.canvas.style.width = `${(height * ratio)}px`;
         }
     }
 

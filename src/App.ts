@@ -14,9 +14,13 @@ class App {
     public static start() {
         const filesElement = document.querySelector("#files") as HTMLSelectElement;
         const inputElement = document.querySelector("#input") as HTMLInputElement;
+        const pauseElement = document.querySelector("#pause") as HTMLButtonElement;
+        const resetElement = document.querySelector("#reset") as HTMLButtonElement;
 
         inputElement.addEventListener('change', App.onFile);
         filesElement.addEventListener("change", App.onROMSelect);
+        pauseElement.addEventListener("click", App.pause);
+        resetElement.addEventListener("click", App.reset);
         window.addEventListener("resize", App.onResize);
 
         document.onkeydown = App.onKeyDown;
@@ -51,7 +55,7 @@ class App {
         const buffer = await file.arrayBuffer();
         const extension = FileUtil.getExtension(file.name);
         
-        App.system = SystemFactory.get(extension, new Uint8Array(buffer));
+        App.system = await SystemFactory.get(extension, new Uint8Array(buffer));
         App.canvas.resize(App.system.width, App.system.height);
 
         if (App.interval)
@@ -64,14 +68,12 @@ class App {
     private static onKeyDown(event : KeyboardEvent) {
         if (App.pressedKeys.indexOf(event.key) === -1) {
             App.pressedKeys.push(event.key);
-            console.log(App.pressedKeys);
         }
     }
 
     private static onKeyUp(event : KeyboardEvent) {
         const index = App.pressedKeys.indexOf(event.key);
         App.pressedKeys.splice(index, 1);
-        console.log(App.pressedKeys);
     }
 
     private static fillFileList() {
@@ -94,9 +96,15 @@ class App {
     private static run() {
         App.system.update(App.pressedKeys);
         const frame = App.system.getCurrentFrame();
+        App.canvas.draw(frame);
+    }
 
-        if (frame)
-            App.canvas.draw(frame);
+    private static pause() {
+        App.system.pause();
+    }
+
+    private static reset() {
+        App.system.reset();
     }
 }
 

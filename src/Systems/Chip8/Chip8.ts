@@ -35,6 +35,9 @@ export class Chip8 implements ISystem {
 
     public update(keys : string[]) {
 
+        if (this.state.halted)
+            return;
+
         this.cycles = cycleNumber;
         this.state.updateKeys(keys);
 
@@ -44,15 +47,23 @@ export class Chip8 implements ISystem {
         if (this.state.sound > 0)
             this.state.sound--;
 
-        while (this.cycles >= 0) {
+        while (!this.state.halted && this.cycles >= 0) {
             var opcode = this.interpreter.fetch();
             this.cycles -= opcode.cyclesTaken;
         }
     }
 
     public getCurrentFrame() {
-        if (this.state.draw)
-            return this.ppu.framebuffer;
+        return this.ppu.framebuffer;
+    }
+
+    public pause() {
+        this.state.halted = !this.state.halted;
+    }
+
+    public reset() {
+        this.ppu.framebuffer.clear();
+        this.state.reset();
     }
 
     public get width() {

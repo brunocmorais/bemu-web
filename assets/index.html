@@ -9,16 +9,35 @@
 </head>
 <body>
     <div class="container">
-        <div class="left">
-            <canvas id="canvas"></canvas>
+        <div class="left center">
+            <div class="full">
+                <canvas id="canvas"></canvas>
+            </div>
         </div>
-        <div class="right">
+        <div class="right center">
             <div class="row">
-                <input type="file" id="input" webkitdirectory directory multiple />
-                <button id="button" onclick="document.getElementById('input').click()">Selecione o diretório das ROMs</button>
+                <div class="half">
+                    <input type="file" id="input" webkitdirectory directory multiple />
+                    <button id="roms" onclick="document.getElementById('input').click()">
+                        Selecionar jogos
+                    </button>
+                </div>
+                <div class="half">
+                    <button id="filters">Filtros</button>
+                </div>
             </div>
             <div class="row">
-                <select id="files" size="2"></select>
+                <div class="half">
+                    <button id="pause">Pausar/Continuar</button>
+                </div>
+                <div class="half">
+                    <button id="reset">Reiniciar</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="full">
+                    <select id="files" size="2"></select>
+                </div>
             </div>
         </div>
     </div>
