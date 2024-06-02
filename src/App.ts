@@ -1,116 +1,96 @@
 import { Canvas } from "./GUI/Canvas";
-import { SystemFactory, supportedExtensions } from "./Systems/SystemFactory";
+import { SystemFactory } from "./Systems/SystemFactory";
 import { File as FileUtil } from "./Core/Util/File";
 import { ISystem } from "./Core/System/ISystem";
+import { FilterType } from "./Core/Video/Filters/FilterType";
+import { Factory as FilterFactory } from "./Core/Video/Filters/Factory";
+import { Filter } from "./Core/Video/Filters/Filter";
+import { FileList as FilesList } from "./GUI/FileList";
+import { GamePad } from "./GUI/GamePad";
+import { Elements } from "./GUI/Elements";
 
 class App {
 
     private static readonly canvas = new Canvas();
+    private static readonly fileList = new FilesList();
     private static system : ISystem;
-    private static interval : NodeJS.Timeout;
-    private static fileList : File[];
-    private static pressedKeys : string[] = [];
+    private static updateInterval : NodeJS.Timeout;
+    private static drawInterval : NodeJS.Timeout;
+    private static filter : Filter;
 
     public static start() {
-        const filesElement = document.querySelector("#files") as HTMLSelectElement;
-        const inputElement = document.querySelector("#input") as HTMLInputElement;
-        const pauseElement = document.querySelector("#pause") as HTMLButtonElement;
-        const resetElement = document.querySelector("#reset") as HTMLButtonElement;
-
-        inputElement.addEventListener('change', App.onFile);
-        filesElement.addEventListener("change", App.onROMSelect);
-        pauseElement.addEventListener("click", App.pause);
-        resetElement.addEventListener("click", App.reset);
-        window.addEventListener("resize", App.onResize);
-
-        document.onkeydown = App.onKeyDown;
-        document.onkeyup = App.onKeyUp;
+        GamePad.start();
+        
+        Elements.defineEvents(
+            App.selectFile, App.selectROM, App.pause, 
+            App.reset, App.selectFilter, App.resize
+        );
     }
 
-    private static onResize() {
+    private static resize() {
         App.canvas.resize(App.system.width, App.system.height);
     }
 
-    private static onFile(event : Event) {
-        const target = event?.target as HTMLInputElement;
-        const array = Array.from(target?.files as FileList);
+    private static selectFile(event : Event) {
+        const target = event.target as HTMLInputElement;
+        const files = Array.from(target.files as FileList);
 
-        App.fileList = array.filter((item) => {
-            const fileName = item.name;
-            const extension = FileUtil.getExtension(fileName);
-            return (extension && supportedExtensions.indexOf(extension) >= 0)
-        }).sort((a, b) => {
-            if (a.name < b.name) return -1;
-            else if (a.name > b.name) return 1;
-            else return 0;
-        });
+        App.fileList.fill(files);
 
-        App.fillFileList();
+        if (App.fileList.length === 1)
+            App.selectROM();
+
+        Elements.removeFocus();
     }
 
-    private static async onROMSelect() {
+    private static async selectROM() {
 
-        const filesElement = document.querySelector("#files") as HTMLSelectElement;
-        const file = App.fileList[filesElement.selectedIndex];
-        const buffer = await file.arrayBuffer();
-        const extension = FileUtil.getExtension(file.name);
+        const file = App.fileList.getAt(Elements.files.selectedIndex);        
+        App.system = await SystemFactory.get(
+            FileUtil.getExtension(file.name), 
+            new Uint8Array(await file.arrayBuffer())
+        );
         
-        App.system = await SystemFactory.get(extension, new Uint8Array(buffer));
-        App.canvas.resize(App.system.width, App.system.height);
+        if (!App.updateInterval)
+            App.updateInterval = setInterval(App.update, 16);
 
-        if (App.interval)
-            clearInterval(App.interval);
+        if (!App.drawInterval)
+            App.drawInterval = setInterval(App.draw, 16);
 
-        App.interval = setInterval(App.run, 16);
-        filesElement.blur();
+        const filter = FilterFactory.get(App.filter?.type ?? 0, App.system.width, App.system.height);
+        App.filter = filter;
+
+        App.canvas.resize(filter.width, filter.height);
+        Elements.removeFocus();
     }
 
-    private static onKeyDown(event : KeyboardEvent) {
-        if (App.pressedKeys.indexOf(event.key) === -1) {
-            App.pressedKeys.push(event.key);
-        }
-    }
+    private static selectFilter() {
 
-    private static onKeyUp(event : KeyboardEvent) {
-        const index = App.pressedKeys.indexOf(event.key);
-        App.pressedKeys.splice(index, 1);
-    }
-
-    private static fillFileList() {
-
-        const filesElement = document.querySelector("#files") as HTMLSelectElement;
-        filesElement.replaceChildren();
-
-        let index = 0;
-
-        for (const item of App.fileList) {
-
-            const option = document.createElement("option");
-            option.innerText = item.name;
-            option.value = (index++).toString();
-            
-            filesElement.add(option);
-        }
+        const filterType : FilterType = parseInt(Elements.filters.value);
+        const filter = FilterFactory.get(filterType, App.system.width, App.system.height);
+        App.filter = filter;
         
-        filesElement.selectedIndex = 0;
-
-        if (App.fileList.length === 1) {
-            this.onROMSelect();
-        }
+        App.canvas.resize(filter.width, filter.height);
+        Elements.removeFocus();
     }
 
-    private static run() {
-        App.system.update(App.pressedKeys);
-        const frame = App.system.getCurrentFrame();
-        App.canvas.draw(frame);
+    private static update() {
+        App.system.update(GamePad.keys);
+    }
+
+    private static draw() {
+        App.filter.frame = App.system.getCurrentFrame();
+        App.canvas.draw(App.filter.update());
     }
 
     private static pause() {
         App.system.pause();
+        Elements.removeFocus();
     }
 
     private static reset() {
         App.system.reset();
+        Elements.removeFocus();
     }
 }
 

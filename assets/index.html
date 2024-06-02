@@ -16,14 +16,11 @@
         </div>
         <div class="right center">
             <div class="row">
-                <div class="half">
+                <div class="full">
                     <input type="file" id="input" multiple accept=".zip, .ch8" />
                     <button id="roms" onclick="document.getElementById('input').click()">
-                        Selecionar
+                        Selecione suas ROMs
                     </button>
-                </div>
-                <div class="half">
-                    <button id="filters">Filtros</button>
                 </div>
             </div>
             <div class="row">
@@ -36,7 +33,27 @@
             </div>
             <div class="row">
                 <div class="full">
-                    <select id="files" size="2"></select>
+                    <label class="pull-left">ROM:</label>
+                    <select id="files">
+                        <option>Nenhuma ROM carregada!</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="full">
+                    <label class="pull-left">Filtro:</label>
+                    <select id="filters">
+                        <option value="0">Nenhum</option>
+                        <option value="1">Eagle</option>
+                        <option value="2">EPX</option>
+                        <option value="3">Nearest</option>
+                        <option value="4">Scale2x</option>
+                        <option value="5">Scale3x</option>
+                        <option value="6">Bilinear</option>
+                        <option value="7">Super Eagle</option>
+                        <option value="8">2xSaI</option>
+                        <option value="9">Super 2xSaI</option>
+                    </select>
                 </div>
             </div>
         </div>

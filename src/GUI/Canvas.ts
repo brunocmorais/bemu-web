@@ -8,8 +8,6 @@ export class Canvas {
     constructor() {
         this.canvas = document.getElementById("canvas") as HTMLCanvasElement;
         this.context = this.canvas.getContext("2d") as CanvasRenderingContext2D;
-        // this.context.fillStyle = "black";
-        // this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
     public resize(width : number, height : number) {
@@ -23,7 +21,7 @@ export class Canvas {
             .getBoundingClientRect();
 
         const maxWidth = panelLeft.width - 60;
-        const maxHeight = wh - 60;
+        const maxHeight = wh - 50;
 
         let desW = Math.min(maxHeight * ratio, maxWidth);
         let desH = Math.min(maxWidth / ratio, maxHeight);

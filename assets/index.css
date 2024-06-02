@@ -1,6 +1,7 @@
 body {
     background-color: #222;
     margin: 0;
+    font-family: Arial;
 }
 
 .row {
@@ -10,13 +11,12 @@ body {
     float: left;
 }
 
-#files {
+select {
     width: 100%;
-    height: calc(100vh - 190px);
     background-color: #222;
     color: white;
-    overflow-y: auto;
-    scrollbar-width: 0px;
+    padding: 10px;
+    border-radius: 3px;
 }
 
 #input {
@@ -29,6 +29,7 @@ button {
     border: solid 1px black;
     padding: 10px;
     width: 100%;
+    border-radius: 3px;
 }
 
 #canvas {
@@ -71,6 +72,17 @@ button:hover {
 
 .full {
     padding: 0 10px 0 10px;
+}
+
+.pull-left {
+    float: left;
+    text-align: left;
+}
+
+label {
+    color: white;
+    font-size: 13px;
+    padding: 5px 0 5px 0;
 }
 
 @media (max-width: 1000px) {

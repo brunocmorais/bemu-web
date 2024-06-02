@@ -1,7 +1,12 @@
 import { Framebuffer } from "../../Core/Video/Framebuffer";
-import { Pixel } from "../../Core/Video/Pixel";
 import { height, vRAMAddress, width } from "./Constants";
 import { MMU } from "./MMU";
+
+const blackSprite = [
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+];
+
+const blackPixel = 0x000000FF;
 
 export class PPU {
 
@@ -14,26 +19,39 @@ export class PPU {
     }
 
     public get framebuffer() {
-        for (let y = 0; y < height; y++)
+
+        for (let y = 0; y < height; y += 8)
             for (let x = 0; x < width; x++)
-                this._framebuffer.set(x, y, this.get(x, y));
+                this._framebuffer.setVerticalLine(x, y, this.get(x, y));
 
         return this._framebuffer;
     }
 
     private get(x: number, y: number) {
         y = (height - 1 - y);
-        const sprite = this.mmu.get(vRAMAddress + Math.floor(Math.floor(x * height / 8) + y / 8));
+        const sprite = this.mmu.get(vRAMAddress + ((x * height) >> 3) + (y >> 3));
 
-        if ((sprite & (1 << y % 8)) > 0) {
-            if (y >= 0 && y <= 100)
-                return new Pixel(0x00FF00FF);
-            else if (y > 100 && y <= 200)
-                return new Pixel(0xFFFFFFFF);
-            else
-                return new Pixel(0xFF0000FF);
-        }
+        if (sprite <= 0)
+            return blackSprite;
 
-        return new Pixel(0x000000FF);
+        let pixel : number;
+
+        if (y >= 0 && y <= 100)
+            pixel = 0x00FF00FF;
+        else if (y > 100 && y <= 200)
+            pixel = 0xFFFFFFFF;
+        else
+            pixel = 0xFF0000FF;
+
+        return [ 
+            (sprite & 0x80) === 0x80 ? pixel : blackPixel,
+            (sprite & 0x40) === 0x40 ? pixel : blackPixel,
+            (sprite & 0x20) === 0x20 ? pixel : blackPixel,
+            (sprite & 0x10) === 0x10 ? pixel : blackPixel,
+            (sprite & 0x08) === 0x08 ? pixel : blackPixel,
+            (sprite & 0x04) === 0x04 ? pixel : blackPixel,
+            (sprite & 0x02) === 0x02 ? pixel : blackPixel,
+            (sprite & 0x01) === 0x01 ? pixel : blackPixel,
+        ];
     }
 }

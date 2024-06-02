@@ -40,21 +40,63 @@ export class Framebuffer {
     }
 
     public set(x: number, y: number, pixel: Pixel) {
-        const num = pixel.value;
         const start = this.getIndex(x, y);
 
-        this.data[start]     = ((num & 0xFF000000) >> 24) & 0xFF;
-        this.data[start + 1] = ((num & 0x00FF0000) >> 16) & 0xFF;
-        this.data[start + 2] = ((num & 0x0000FF00) >> 8)  & 0xFF;
-        this.data[start + 3] = ((num & 0x000000FF))       & 0xFF;
+        this.data[start]     = pixel.R;
+        this.data[start + 1] = pixel.G;
+        this.data[start + 2] = pixel.B;
+        this.data[start + 3] = pixel.A;
     }
 
-    public setScaledPixel(pixel: ScaledPixel, x: number, y: number)
-    {
+    public setScanline(x: number, y: number, pixels: number[]) {
+        const start = this.getIndex(x, y);
+
+        for (let i = 0; i < pixels.length; i++) {
+            const padding = i * 4;
+            const pixel = pixels[i];
+
+            this.data[start + padding]     = ((pixel & 0xFF000000) >> 24) >>> 0;
+            this.data[start + padding + 1] = ((pixel & 0x00FF0000) >> 16);
+            this.data[start + padding + 2] = ((pixel & 0x0000FF00) >> 8);
+            this.data[start + padding + 3] = ((pixel & 0x000000FF));
+        }
+    }
+
+    public setVerticalLine(x: number, y: number, pixels: number[]) {
+        const start = this.getIndex(x, y);
+        const width = this.width;
+
+        for (let i = 0; i < pixels.length; i++) {
+            const padding = i * width * 4;
+            const pixel = pixels[i];
+
+            this.data[start + padding]     = ((pixel & 0xFF000000) >> 24) >>> 0;
+            this.data[start + padding + 1] = ((pixel & 0x00FF0000) >> 16);
+            this.data[start + padding + 2] = ((pixel & 0x0000FF00) >> 8);
+            this.data[start + padding + 3] = ((pixel & 0x000000FF));
+        }
+    }
+
+    public setScaledPixel(pixel: ScaledPixel, x: number, y: number) {
         const scale = pixel.scale;
 
         for (let i = 0; i < scale; i++)
             for (let j = 0; j < scale; j++)
                 this.set(i + (x * scale), j + (y * scale), pixel.get(i, j));
+    }
+
+    public setSquarePixel(pixels: number[], scale: number, x: number, y: number) {
+
+        for (let i = 0; i < scale; i++) {
+            for (let j = 0; j < scale; j++) {
+                const pixel = pixels[j * scale + i];
+                const start = this.getIndex(i + (x * scale), j + (y * scale));
+
+                this.data[start]     = ((pixel & 0xFF000000) >> 24) >>> 0;
+                this.data[start + 1] = ((pixel & 0x00FF0000) >> 16);
+                this.data[start + 2] = ((pixel & 0x0000FF00) >> 8);
+                this.data[start + 3] = ((pixel & 0x000000FF));
+            }
+        }
     }
 }
