@@ -7,12 +7,16 @@ export class Elements {
         onReset: () => void,
         onChangeFilter: () => void,
         onResize: () => void,
+        onCaptureBmp: () => void,
+        onCaptureQoi: () => void
     ) {
         Elements.input.addEventListener("change", onFile);
         Elements.files.addEventListener("change", onROMSelect);
         Elements.pause.addEventListener("click", onPause);
         Elements.reset.addEventListener("click", onReset);
         Elements.filters.addEventListener("change", onChangeFilter);
+        Elements.bmp.addEventListener("click", onCaptureBmp);
+        Elements.qoi.addEventListener("click", onCaptureQoi);
         window.addEventListener("resize", onResize);
     }
 
@@ -42,6 +46,14 @@ export class Elements {
 
     public static get filters() { 
         return this.element<HTMLSelectElement>("#filters");
+    }
+
+    public static get bmp() {
+        return this.element<HTMLButtonElement>("#bmp");
+    }
+
+    public static get qoi() {
+        return this.element<HTMLButtonElement>("#qoi");
     }
 
     public static removeFocus() {

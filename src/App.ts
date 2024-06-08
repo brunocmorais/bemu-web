@@ -8,6 +8,8 @@ import { Filter } from "./Core/Video/Filters/Filter";
 import { FileList as FilesList } from "./GUI/FileList";
 import { GamePad } from "./GUI/GamePad";
 import { Elements } from "./GUI/Elements";
+import { ImageType } from "./Core/Image/ImageType";
+import { Factory as ImageFactory } from "./Core/Image/Factory";
 
 class App {
 
@@ -23,7 +25,9 @@ class App {
         
         Elements.defineEvents(
             App.selectFile, App.selectROM, App.pause, 
-            App.reset, App.selectFilter, App.resize
+            App.reset, App.selectFilter, App.resize,
+            () => App.onCapture(ImageType.BMP),
+            () => App.onCapture(ImageType.QOI)
         );
     }
 
@@ -91,6 +95,17 @@ class App {
     private static reset() {
         App.system.reset();
         Elements.removeFocus();
+    }
+
+    private static onCapture(type: ImageType) {
+        App.filter.frame = App.system.getCurrentFrame();
+        const image = ImageFactory.get(type, App.filter.update());
+        const a = document.createElement("a");
+        const fileName = `screenshot_${new Date().toISOString()}${image.extension}`;
+
+        a.href = URL.createObjectURL(new Blob([(image.toBytes())]));
+        a.setAttribute("download", fileName);
+        a.click();
     }
 }
 

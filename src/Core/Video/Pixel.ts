@@ -9,4 +9,15 @@ export class Pixel {
     {
         this.value = value;
     }
+
+    public equals(other: Pixel) {
+        return this.R === other.R &&
+            this.G === other.G &&
+            this.B === other.B &&
+            this.A === other.A;
+    }
+
+    public static from(r: number, g: number, b: number, a: number) {
+        return new Pixel(((r << 24) | (g << 16) | (b << 8) | a) >>> 0);
+    }
 }
