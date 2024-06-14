@@ -1,6 +1,6 @@
 import { LittleEndian } from "../../Util/LittleEndian";
 import { State } from "./State";
-import { MMU } from "../../../Systems/SpaceInvaders/MMU";
+import { MMU } from "../../Memory/MMU";
 import { Register } from "./Register";
 import { Opcode } from "./Opcode";
 

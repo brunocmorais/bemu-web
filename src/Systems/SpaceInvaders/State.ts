@@ -12,7 +12,7 @@ export class State extends State8080 {
         if (keys.indexOf("1") >= 0)
             this.ports.read1 |= (1 << 2) & 0xFF;
         
-        if (keys.indexOf(" "))
+        if (keys.indexOf(" ") >= 0)
             this.ports.read1 |= (1 << 4) & 0xFF;
 
         if (keys.indexOf("ArrowLeft") >= 0)
