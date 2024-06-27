@@ -35,7 +35,9 @@ export class CartridgeHeader {
         this.globalChecksum = globalChecksum;
     }
 
-    public static read(bytes : Uint8Array) {
+    public static read(rom : Uint8Array) {
+
+        const bytes = rom.slice(0x100);
             
         const nintendoLogo = bytes.slice(0x004, 0x033);
         const title = String.fromCharCode(...bytes.slice(0x034, 0x043));

@@ -2,6 +2,8 @@ import { State as State8080 } from "../../Core/CPU/Intel8080/State";
 
 export class State extends State8080 {
 
+    public draw : boolean = false;
+
     public updateKeys(keys: string[]) {
 
         this.ports.read1 = 0;

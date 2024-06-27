@@ -1,55 +1,43 @@
-import { Pixel } from "../Pixel";
+import { Framebuffer } from "../Framebuffer";
 import { ScaledPixel } from "../ScaledPixel";
 import { Filter } from "./Filter";
 import { FilterType } from "./FilterType";
 
 type NeighborPixels = {
-               a : Pixel, 
-    c : Pixel, p : Pixel, b : Pixel,
-               d : Pixel;
+    a : number,
+    b : number,
+    c : number,
+    p : number,
+    d : number;
 }
 
 export class EPX extends Filter {
-    
-    constructor(width: number, height: number) {
-        super(width, height, 2);
+
+    constructor(framebuffer : Framebuffer) {
+        super(framebuffer, 2);
     }
-    
+
     public override update() {
-        
+
+        const scaled = new ScaledPixel(2, 0xFF);
+        const adj : NeighborPixels = { a: 0, c: 0, p: 0, b: 0, d: 0 };
+
         for (let x = 0; x < this.framebuffer.width; x++) {
             for (let y = 0; y < this.framebuffer.height; y++) {
-                var pixel2x = new ScaledPixel(2);
-                var pixel = this.get(x, y);
-                        
-                var adj : NeighborPixels = { 
-                                            a : this.get(x, y - 1),
-                    c : this.get(x - 1, y), p : this.get( x ,  y ), b : this.get(x + 1, y),
-                                            d : this.get(x, y + 1),
-                };
+                adj.a = this.get(x, y - 1);
+                adj.c = this.get(x - 1, y);
+                adj.p = this.get(x, y);
+                adj.b = this.get(x + 1, y);
+                adj.d = this.get(x, y + 1);
 
-                pixel2x.set(0, 0, pixel);
-                pixel2x.set(1, 0, pixel);
-                pixel2x.set(0, 1, pixel);
-                pixel2x.set(1, 1, pixel);
+                scaled.set(0, 0, adj.c === adj.a && adj.c !== adj.d && adj.a !== adj.b ? adj.a : adj.p);
+                scaled.set(1, 0, adj.a === adj.b && adj.a !== adj.c && adj.b !== adj.d ? adj.b : adj.p);
+                scaled.set(0, 1, adj.d === adj.c && adj.d !== adj.b && adj.c !== adj.a ? adj.c : adj.p);
+                scaled.set(1, 1, adj.b === adj.d && adj.b !== adj.a && adj.d !== adj.c ? adj.d : adj.p);
 
-                if (adj.c.value === adj.a.value && adj.c.value !== adj.d.value && adj.a.value !== adj.b.value) 
-                    pixel2x.set(0, 0, adj.a);
-
-                if (adj.a.value === adj.b.value && adj.a.value !== adj.c.value && adj.b.value !== adj.d.value) 
-                    pixel2x.set(1, 0, adj.b);
-
-                if (adj.d.value === adj.c.value && adj.d.value !== adj.b.value && adj.c.value !== adj.a.value) 
-                    pixel2x.set(0, 1, adj.c);
-
-                if (adj.b.value === adj.d.value && adj.b.value !== adj.a.value && adj.d.value !== adj.c.value) 
-                    pixel2x.set(1, 1, adj.d);
-
-                this.scaled.setScaledPixel(pixel2x, x, y);
+                this._scaled.setScaledPixel(scaled, x, y);
             }
         }
-
-        return this.scaled;
     }
 
     public get type(): FilterType {

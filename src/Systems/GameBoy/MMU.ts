@@ -1,10 +1,10 @@
 import { MMU as AbstractMMU } from "../../Core/Memory/MMU";
 import { APU } from "../Audio/APU";
-import { ColorPalette } from "./GPU/ColorPalette";
+import { ColorPaletteData } from "./GPU/ColorPaletteData";
 import { VRAM } from "./GPU/VRAM";
 import { IMapper } from "./Mappers/IMapper";
 import { Joypad } from "./Joypad";
-import { MonochromePalette } from "./GPU/MonochromePalette";
+import { MonochromePaletteData } from "./GPU/MonochromePaletteData";
 import { OAM } from "./GPU/OAM";
 import { WRAM } from "./WRAM";
 import { Factory } from "./Mappers/Factory";
@@ -12,14 +12,14 @@ import { CartridgeHeader } from "./CartridgeHeader";
 
 export class MMU extends AbstractMMU {
 
-    private vram : VRAM;
-    private io : number[];
+    public readonly vram : VRAM;
+    public readonly colorPalette : ColorPaletteData;
+    public readonly monochromePalette : MonochromePaletteData;
+    public readonly io : number[];
+    public readonly oam : OAM;
     private wram : WRAM;
-    private oam : OAM;
     private zeroPage : number[];
     private mbc : IMapper;
-    private colorPalette : ColorPalette;
-    private monochromePalette : MonochromePalette;
     private joypad : Joypad;
     private apu : APU;
     private gbcMode : boolean;
@@ -33,8 +33,8 @@ export class MMU extends AbstractMMU {
         this.oam = new OAM(this);
         this.zeroPage = new Array<number>(0x80);
         this.mbc = Factory.get(this, 0x00);
-        this.colorPalette = new ColorPalette();
-        this.monochromePalette = new MonochromePalette();
+        this.colorPalette = new ColorPaletteData();
+        this.monochromePalette = new MonochromePaletteData(this);
         this.joypad = new Joypad();
         this.apu = new APU();
         this.gbcMode = false;

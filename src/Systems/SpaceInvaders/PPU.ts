@@ -19,12 +19,13 @@ export class PPU {
     }
 
     public get framebuffer() {
+        return this._framebuffer;
+    }
 
+    public update() {
         for (let y = 0; y < height; y += 8)
             for (let x = 0; x < width; x++)
                 this._framebuffer.setVerticalLine(x, y, this.get(x, y));
-
-        return this._framebuffer;
     }
 
     private get(x: number, y: number) {

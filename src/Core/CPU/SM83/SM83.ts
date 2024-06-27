@@ -6,10 +6,10 @@ import { Opcode } from "./Opcode";
 import { Register } from "./Register";
 import { State } from "./State";
 
-export class SM83 {
-    private readonly mmu: MMU;
-    private readonly state: State;
-    private cycles : number = 0;
+export abstract class SM83 {
+    protected readonly mmu: MMU;
+    protected readonly state: State;
+    protected cycles : number = 0;
     public rstOffset : number = 0;
     public freq: number;
 
@@ -19,50 +19,52 @@ export class SM83 {
         this.state = state;
     }
 
-    private getNextWord() {
+    public abstract handleInterrupts() : void;
+
+    protected getNextWord() {
         const b1 = this.mmu.get(this.state.pc++);
         const b2 = this.mmu.get(this.state.pc++);
         return LittleEndian.getWordFrom2Bytes(b1, b2);
     }
 
-    private getNextByte() {
+    protected getNextByte() {
         return this.mmu.get(this.state.pc++);
     }
 
-    private readByteFromMemory(addr : number) {
+    protected readByteFromMemory(addr : number) {
         return this.mmu.get(addr);
     }
 
-    private writeByteToMemory(addr : number, value: number) {
+    protected writeByteToMemory(addr : number, value: number) {
         this.mmu.set(addr, value);
     }
 
-    private readWordFromMemory(addr : number) {
+    protected readWordFromMemory(addr : number) {
         const a = this.mmu.get(addr);
         const b = this.mmu.get(addr + 1);
         return LittleEndian.getWordFrom2Bytes(a, b);
     }
 
-    private writeWordToMemory(addr: number, word: number) {
+    protected writeWordToMemory(addr: number, word: number) {
         const [a, b] = LittleEndian.get2BytesFromWord(word);
         this.mmu.set(addr, b);
         this.mmu.set(addr + 1, a);
     }
 
-    private popStack() {
+    protected popStack() {
         const word = this.readWordFromMemory(this.state.sp);
         this.state.sp += 2;
         this.state.sp &= 0xFFFF;
         return word;
     }
 
-    private pushStack(value : number) {
+    protected pushStack(value : number) {
         this.state.sp -= 2;
         this.state.sp &= 0xFFFF;
         this.writeWordToMemory(this.state.sp, value);
     }
 
-    private getByteFromRegister(register : Register) {
+    protected getByteFromRegister(register : Register) {
         switch (register) {
             case Register.A: return this.state.a;
             case Register.B: return this.state.b;
@@ -81,7 +83,7 @@ export class SM83 {
         }
     }
 
-    private getWordFromRegister(register : Register) {
+    protected getWordFromRegister(register : Register) {
         switch (register) {
             case Register.AF: return this.state.af;
             case Register.BC: return this.state.bc;
@@ -94,7 +96,7 @@ export class SM83 {
         }
     }
 
-    private setByteToRegister(register : Register, value : number) {
+    protected setByteToRegister(register : Register, value : number) {
         
         switch (register) {
             case Register.A: this.state.a = value; break;
@@ -114,15 +116,15 @@ export class SM83 {
         }
     }
 
-    private checkZero(value : number) {
+    protected checkZero(value : number) {
         return value === 0;
     }
 
-    private checkHalfCarry(a : number, b : number, result : number) {
+    protected checkHalfCarry(a : number, b : number, result : number) {
         return (((a ^ b ^ result) & 0x10) === 0x10);
     }
 
-    private checkNegative(value : number) {
+    protected checkNegative(value : number) {
         return (value & 0x80) === 0x80;
     }
 
@@ -397,7 +399,7 @@ export class SM83 {
 
     //#region Main opcodes
 
-    private adcImp() {
+    protected adcImp() {
         const value = this.getNextByte();
         let result = this.state.a + value;
 
@@ -413,7 +415,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private sbcImp() {
+    protected sbcImp() {
         const value = this.getNextByte();
         let result = this.state.a - value;
 
@@ -429,7 +431,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private xorImp() {
+    protected xorImp() {
         const value = this.getNextByte();
         this.state.flags.carry = false;
         this.state.a ^= value;
@@ -440,7 +442,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private cpImp() {
+    protected cpImp() {
         const value = this.getNextByte();                
         const result = (this.state.a - value) & 0xFF;
         this.state.flags.carry = value > this.state.a;
@@ -451,11 +453,11 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private nop() {
+    protected nop() {
         this.cycles += 4;
     }
 
-    private stop() {
+    protected stop() {
         const value = this.getNextByte();
 
         if (value !== 0)
@@ -464,7 +466,7 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private conditionalJr(condition: boolean) {
+    protected conditionalJr(condition: boolean) {
         if (condition)
             this.jr();
         else {
@@ -473,15 +475,15 @@ export class SM83 {
         }
     }
 
-    private jrNZ() {
+    protected jrNZ() {
         this.conditionalJr(!this.state.flags.zero);
     }
 
-    private jrNC() {
+    protected jrNC() {
         this.conditionalJr(!this.state.flags.carry);
     }
 
-    private lD_d16(register: Register) {
+    protected lD_d16(register: Register) {
         switch (register) {
             case Register.BC:
                 this.state.c = this.mmu.get(this.state.pc++);
@@ -504,7 +506,7 @@ export class SM83 {
         this.cycles += 12;
     }
 
-    private lD_A(register: Register, action: Action) {
+    protected lD_A(register: Register, action: Action) {
 
         if (register === Register.BC)
             this.mmu.set(this.state.bc, this.state.a);
@@ -523,7 +525,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private incRegPair(register: Register) {
+    protected incRegPair(register: Register) {
         switch (register) {
             case Register.BC: 
                 this.state.bc++; 
@@ -544,7 +546,7 @@ export class SM83 {
         }
     }
 
-    private inc(register: Register) {
+    protected inc(register: Register) {
         let regValue : number;
 
         switch (register) {
@@ -603,7 +605,7 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private incRef() {
+    protected incRef() {
         const reference = this.mmu.get(this.state.hl);
         this.mmu.set(this.state.hl, (this.mmu.get(this.state.hl) + 1) & 0xFF);
         
@@ -614,7 +616,7 @@ export class SM83 {
         this.cycles += 12;
     }
 
-    private dec(register: Register) {
+    protected dec(register: Register) {
         let regValue : number;
 
         switch (register) {
@@ -673,7 +675,7 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private decRef() {
+    protected decRef() {
 
         const reference = this.mmu.get(this.state.hl);
         this.mmu.set(this.state.hl, (this.mmu.get(this.state.hl) - 1) & 0xFF);
@@ -685,7 +687,7 @@ export class SM83 {
         this.cycles += 12;
     }
 
-    private ld_d8(register: Register) {
+    protected ld_d8(register: Register) {
         switch (register) {
             case Register.A: this.state.a = this.getNextByte(); break;
             case Register.B: this.state.b = this.getNextByte(); break;
@@ -703,7 +705,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private rlca() {
+    protected rlca() {
         this.state.flags.carry = ((this.state.a & 0x80) >> 7) == 1;
         this.state.a <<= 1;
 
@@ -719,7 +721,7 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private rla() {
+    protected rla() {
         const previousCarry = this.state.flags.carry;
         this.state.flags.carry = ((this.state.a & 0x80) >> 7) == 1;
         this.state.a <<= 1;
@@ -736,7 +738,7 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private daa() {
+    protected daa() {
         
         if (!this.state.flags.subtract) {
             if (this.state.flags.carry || this.state.a > 0x99)  { 
@@ -762,14 +764,14 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private scf() {
+    protected scf() {
         this.state.flags.carry = true;
         this.state.flags.halfCarry = false;
         this.state.flags.subtract = false;
         this.cycles += 4;       
     }
 
-    private ld_SP() {
+    protected ld_SP() {
         let addr = this.getNextWord();
         const [msb, lsb] = LittleEndian.get2BytesFromWord(this.state.sp);
         this.mmu.set(addr++, lsb);
@@ -778,22 +780,22 @@ export class SM83 {
         this.cycles += 20;
     }
 
-    private jr() {
+    protected jr() {
         const value = Byte.toSignedByte(this.getNextByte());
         const result = this.state.pc + value;
         this.state.pc = result & 0xFFFF;
         this.cycles += 12;
     }
 
-    private jrz() {
+    protected jrz() {
         this.conditionalJr(this.state.flags.zero);
     }
 
-    private jrc() {
+    protected jrc() {
         this.conditionalJr(this.state.flags.carry);
     }
 
-    private addHL(register: Register) {
+    protected addHL(register: Register) {
         const word = this.getWordFromRegister(register);
         const result = (this.state.hl + word);
         this.state.flags.carry = (((this.state.hl ^ word ^ result) & 0x10000) === 0x10000);
@@ -805,7 +807,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private ldA(register: Register, action: Action) {
+    protected ldA(register: Register, action: Action) {
         
         const value = this.getByteFromRegister(register);
         this.state.a = value;
@@ -820,7 +822,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private decRegPair(register: Register) {
+    protected decRegPair(register: Register) {
         switch (register) {
             case Register.BC: 
                 this.state.bc--; 
@@ -841,7 +843,7 @@ export class SM83 {
         }
     }
 
-    private rrca() {
+    protected rrca() {
         this.state.flags.carry = (this.state.a & 0x1) === 1;
         this.state.a >>= 1;
 
@@ -855,7 +857,7 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private rra() {
+    protected rra() {
         const previousCarry = this.state.flags.carry;
         this.state.flags.carry = (this.state.a & 0x1) === 1;
         this.state.a >>= 1;
@@ -870,7 +872,7 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private cpl() {
+    protected cpl() {
         this.state.a = ~this.state.a & 0xFF;
         this.state.flags.subtract = true;
         this.state.flags.halfCarry = true;
@@ -878,7 +880,7 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private ccf() {
+    protected ccf() {
         this.state.flags.carry = !this.state.flags.carry;
         this.state.flags.halfCarry = false;
         this.state.flags.subtract = false;
@@ -886,7 +888,7 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private ld(registerA: Register, registerB: Register) {
+    protected ld(registerA: Register, registerB: Register) {
         const value = this.getByteFromRegister(registerB);
 
         if (registerB === Register.HL)
@@ -906,12 +908,12 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private halt() {
+    protected halt() {
         this.state.halted = true;
         this.cycles += 4;
     }
 
-    private add(register: Register) {
+    protected add(register: Register) {
         const value = this.getByteFromRegister(register);
 
         if (register === Register.HL)
@@ -928,7 +930,7 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private adc(register: Register) {
+    protected adc(register: Register) {
         const value = this.getByteFromRegister(register);
 
         if (register === Register.HL)
@@ -948,7 +950,7 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private sub(register: Register) {
+    protected sub(register: Register) {
         const value = this.getByteFromRegister(register);
 
         if (register === Register.HL)
@@ -964,7 +966,7 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private sbc(register: Register) {
+    protected sbc(register: Register) {
         const value = this.getByteFromRegister(register);
 
         if (register === Register.HL)
@@ -984,7 +986,7 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private and(register: Register) {
+    protected and(register: Register) {
         const value = this.getByteFromRegister(register);
 
         if (register === Register.HL)
@@ -999,7 +1001,7 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private xor(register: Register) {
+    protected xor(register: Register) {
         const value = this.getByteFromRegister(register);
 
         if (register === Register.HL)
@@ -1014,7 +1016,7 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private or(register: Register) {
+    protected or(register: Register) {
         const value = this.getByteFromRegister(register);
 
         if (register === Register.HL)
@@ -1029,7 +1031,7 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private cp(register: Register) {
+    protected cp(register: Register) {
         const value = this.getByteFromRegister(register);
 
         if (register === Register.HL)
@@ -1044,7 +1046,7 @@ export class SM83 {
         this.cycles += 4;
     }
 
-    private conditionalRet(condition : boolean)
+    protected conditionalRet(condition : boolean)
     {
         if (condition) {
             this.ret();
@@ -1054,25 +1056,25 @@ export class SM83 {
             this.cycles += 8;
     }
 
-    private retNZ() {
+    protected retNZ() {
         this.conditionalRet(!this.state.flags.zero);
     }
 
-    private retNC() {
+    protected retNC() {
         this.conditionalRet(!this.state.flags.carry);
     }
 
-    private ldh_a8_A() {
+    protected ldh_a8_A() {
         this.mmu.set(0xFF00 | this.getNextByte(), this.state.a);
         this.cycles += 12;
     }
 
-    private ldh_A_a8() {
+    protected ldh_A_a8() {
         this.state.a = this.mmu.get(0xFF00 | this.getNextByte());
         this.cycles += 12;
     }
 
-    private pop(register: Register) {
+    protected pop(register: Register) {
         switch (register) {
             case Register.BC: this.state.bc = this.popStack(); break;
             case Register.DE: this.state.de = this.popStack(); break;
@@ -1082,7 +1084,7 @@ export class SM83 {
         this.cycles += 12;
     }
 
-    private popPsw() {
+    protected popPsw() {
         const af = this.popStack();
         this.state.a = (af >> 8) & 0xFF;
         const psw = (af & 0xFF) & 0xFF;
@@ -1095,7 +1097,7 @@ export class SM83 {
         this.cycles += 10;
     }
 
-    private conditionalJp(condition: boolean) {
+    protected conditionalJp(condition: boolean) {
         if (condition)
             this.jp();
         else {
@@ -1104,41 +1106,41 @@ export class SM83 {
         }
     }
 
-    private jpNZ() {
+    protected jpNZ() {
         this.conditionalJp(!this.state.flags.zero);
     }
 
-    private jpNC() {
+    protected jpNC() {
         this.conditionalJp(!this.state.flags.carry);
     }
 
-    private ld_C_A() {
+    protected ld_C_A() {
         this.mmu.set(0xFF00 + this.state.c, this.state.a);
         this.cycles += 8;
     }
 
-    private ld_A_C() {
+    protected ld_A_C() {
         this.state.a = this.mmu.get(0xFF00 + this.state.c);
         this.cycles += 8;
     }
 
-    private jp() {
+    protected jp() {
         const addr = this.getNextWord();
         this.state.pc = addr;
         this.cycles += 16;
     }
 
-    private jpAddr(addr : number) {
+    protected jpAddr(addr : number) {
         this.state.pc = addr;
         this.cycles += 10;
     }
 
-    private di() {
+    protected di() {
         this.state.enableInterrupts = false;
         this.cycles += 4;
     }
 
-    private conditionalCall(condition: boolean) {
+    protected conditionalCall(condition: boolean) {
         if (condition)
             this.call();
         else {
@@ -1147,15 +1149,15 @@ export class SM83 {
         }
     }
 
-    private callNZ() {
+    protected callNZ() {
         this.conditionalCall(!this.state.flags.zero);
     }
 
-    private callNC() {
+    protected callNC() {
         this.conditionalCall(!this.state.flags.carry);
     }
 
-    private push(register: Register) {
+    protected push(register: Register) {
         switch (register) {
             case Register.BC: this.pushStack(this.state.bc); break;
             case Register.DE: this.pushStack(this.state.de); break;
@@ -1166,7 +1168,7 @@ export class SM83 {
         this.cycles += 16;
     }
 
-    private add_A_d8() {
+    protected add_A_d8() {
         const value = this.getNextByte();
         const result = this.state.a + value;
 
@@ -1179,7 +1181,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private sub_d8() {
+    protected sub_d8() {
         const value = this.getNextByte();
         const result = this.state.a - value;
 
@@ -1192,7 +1194,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private and_d8() {
+    protected and_d8() {
         const value = this.getNextByte();
         this.state.flags.carry = false;
         this.state.flags.halfCarry = true;
@@ -1203,7 +1205,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private or_d8() {
+    protected or_d8() {
         const value = this.getNextByte();
         this.state.flags.carry = false;
         this.state.flags.halfCarry = false;
@@ -1214,20 +1216,20 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private rst(addr: number) {
+    protected rst(addr: number) {
         this.callAddr(addr);
         this.cycles += 8;
     }
 
-    private retZ() {
+    protected retZ() {
         this.conditionalRet(this.state.flags.zero);
     }
 
-    private retC() {
+    protected retC() {
         this.conditionalRet(this.state.flags.carry);
     }
 
-    private addSP() {
+    protected addSP() {
         const value = Byte.toSignedByte(this.getNextByte());
         const sp = this.state.sp;
         this.state.sp = (sp + value) & 0xFFFF;
@@ -1240,7 +1242,7 @@ export class SM83 {
         this.cycles += 16;
     }
 
-    private ld_HL_SPr8() {
+    protected ld_HL_SPr8() {
 
         const value = Byte.toSignedByte(this.getNextByte());
         const sp = this.state.sp;
@@ -1254,65 +1256,65 @@ export class SM83 {
         this.cycles += 12;        
     }
 
-    private ret() {
+    protected ret() {
         this.state.pc = this.popStack();
         this.cycles += 16;
     }
 
-    private reti() {
+    protected reti() {
         this.ret();
         this.state.enableInterrupts = true;
     }
 
-    private jp_HL() {
+    protected jp_HL() {
         this.jpAddr(this.state.hl);
         this.cycles += 4;
     }
 
-    private ld_SPHL() {
+    protected ld_SPHL() {
         this.state.sp = this.state.hl;
         this.cycles += 8;
     }
 
-    private jpZ() {
+    protected jpZ() {
         this.conditionalJp(this.state.flags.zero);
     }
 
-    private jpC() {
+    protected jpC() {
         this.conditionalJp(this.state.flags.carry);
     }
 
-    private ld_a16_A() {
+    protected ld_a16_A() {
         this.mmu.set(this.getNextWord(), this.state.a);
         this.cycles += 16;
     }
 
-    private ld_A_a16() {
+    protected ld_A_a16() {
         this.state.a = this.mmu.get(this.getNextWord());
         this.cycles += 16;
     }
 
-    private ei() {
+    protected ei() {
         this.state.enableInterrupts = true;
         this.cycles += 4;   
     }
 
-    private callZ() {
+    protected callZ() {
         this.conditionalCall(this.state.flags.zero);
     }
 
-    private callC() {
+    protected callC() {
         this.conditionalCall(this.state.flags.carry);
     }
 
-    private call() {
+    protected call() {
         const addr = this.getNextWord();
         this.pushStack(this.state.pc);
         this.jpAddr(addr);
         this.cycles += 14;
     }
 
-    private callAddr(addr : number) {
+    protected callAddr(addr : number) {
         this.pushStack(this.state.pc);
         this.jpAddr(addr);
     }
@@ -1321,7 +1323,7 @@ export class SM83 {
 
     //#region Prefix CB
 
-    private cb() {
+    protected cb() {
 
         switch (this.getNextByte()) {
 
@@ -1584,7 +1586,7 @@ export class SM83 {
         }
     }
 
-    private rlc(register: Register) {
+    protected rlc(register: Register) {
         
         if (register === Register.HL)
             this.cycles += 8;
@@ -1606,7 +1608,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private rrc(register: Register) {
+    protected rrc(register: Register) {
 
         if (register === Register.HL)
             this.cycles += 8;
@@ -1628,7 +1630,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private rl(register: Register) {
+    protected rl(register: Register) {
 
         if (register === Register.HL)
             this.cycles += 8;
@@ -1647,7 +1649,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private rr(register: Register) {
+    protected rr(register: Register) {
         
         if (register === Register.HL)
             this.cycles += 8;
@@ -1666,7 +1668,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private sla(register: Register) {
+    protected sla(register: Register) {
 
         if (register === Register.HL)
             this.cycles += 8;
@@ -1681,7 +1683,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private sra(register: Register) {
+    protected sra(register: Register) {
         
         if (register === Register.HL)
             this.cycles += 8;
@@ -1698,7 +1700,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private swap(register: Register) {
+    protected swap(register: Register) {
         
         if (register === Register.HL)
             this.cycles += 8;
@@ -1719,7 +1721,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private srl(register: Register) {
+    protected srl(register: Register) {
         
         if (register === Register.HL)
             this.cycles += 8;
@@ -1735,7 +1737,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private bit(bitNumber: number, register: Register) {
+    protected bit(bitNumber: number, register: Register) {
         
         if (register === Register.HL)
             this.cycles += 8;
@@ -1750,7 +1752,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private res(bitNumber: number, register: Register) {
+    protected res(bitNumber: number, register: Register) {
         
         if (register === Register.HL)
             this.cycles += 8;
@@ -1762,7 +1764,7 @@ export class SM83 {
         this.cycles += 8;
     }
 
-    private set(bitNumber: number, register: Register) {
+    protected set(bitNumber: number, register: Register) {
         
         if (register === Register.HL)
             this.cycles += 8;

@@ -1,5 +1,6 @@
+import { IPaletteData } from "./IPaletteData";
 
-export class ColorPalette { 
+export class ColorPaletteData implements IPaletteData { 
     public readonly backgroundPalettes : number[];
     public readonly spritePalettes : number[];
     private backgroundPaletteIndex : number;

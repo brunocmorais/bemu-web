@@ -4,15 +4,19 @@ import { FilterType } from "./FilterType";
 
 export class Empty extends Filter {
     
-    constructor(width: number, height: number) {
-        super(width, height, 1);
+    constructor(framebuffer : Framebuffer) {
+        super(framebuffer, 1);
     }
     
-    public update(): Framebuffer {
-        return this.framebuffer;
+    public update() {
+        // nothing
     }
 
     public get type(): FilterType {
         return FilterType.None;
+    }
+
+    public override get scaled() {
+        return this.framebuffer;
     }
 }

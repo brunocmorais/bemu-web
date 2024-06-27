@@ -15,6 +15,8 @@ export class State {
     public sp : number;
     public enableInterrupts : boolean;
     public halted: boolean;
+    public cycles : number;
+    public instructions: number;
 
     constructor() {
         this.a = 0;
@@ -29,6 +31,8 @@ export class State {
         this.sp = 0;
         this.enableInterrupts = false;
         this.halted = false;
+        this.cycles = 0;
+        this.instructions = 0;
     }
 
     public get bc() {

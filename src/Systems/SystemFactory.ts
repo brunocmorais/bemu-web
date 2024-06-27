@@ -1,5 +1,6 @@
 import { ISystem } from "../Core/System/ISystem";
 import { Chip8 } from "./Chip8/Chip8";
+import { GameBoy } from "./GameBoy/GameBoy";
 import { ROMReader } from "./SpaceInvaders/ROMReader";
 import { SpaceInvaders } from "./SpaceInvaders/SpaceInvaders";
 import { SystemType } from "./SystemType";
@@ -7,7 +8,9 @@ import { SystemType } from "./SystemType";
 
 const systemTypesByExtension = {
     ".ch8": SystemType.Chip8,
-    ".zip": SystemType.SpaceInvaders
+    ".zip": SystemType.SpaceInvaders,
+    ".gb": SystemType.GameBoy,
+    ".gbc": SystemType.GameBoy
 };
 
 export const supportedExtensions = Object.keys(systemTypesByExtension);
@@ -24,6 +27,8 @@ export class SystemFactory {
             case SystemType.SpaceInvaders: 
                 const rom = await ROMReader.read(file);
                 return new SpaceInvaders(rom);
+            case SystemType.GameBoy:
+                return new GameBoy(file);
             default: throw new Error();
         }
     }

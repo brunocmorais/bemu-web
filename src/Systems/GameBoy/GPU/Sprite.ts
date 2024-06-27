@@ -32,7 +32,7 @@ export class Sprite {
         return (this.attr & 0x40) === 0x40;
     }
 
-    public tileVRAMBankNumber() {
+    public tileVRAMBankNumber() : number {
         return (this.attr & 0x8) === 0x8 ? 1 : 0;
     }
 

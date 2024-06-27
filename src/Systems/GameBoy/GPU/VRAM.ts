@@ -2,9 +2,9 @@ import { MMU } from "../MMU";
 
 export class VRAM {
     
+    public readonly bank0 : number[];
+    public readonly bank1 : number[];
     private mmu : MMU;
-    private bank0 : number[];
-    private bank1 : number[];
     private startAddress = 0;
     private active = false;
 
@@ -15,43 +15,43 @@ export class VRAM {
     }
 
     private get dmaSourceAddr() {
-        return ((this.mmu.get(0xFF51) << 8) | (this.mmu.get(0xFF52) & 0xF0)) & 0xFFFF;
+        return ((this.mmu.io[0x51] << 8) | (this.mmu.io[0x52] & 0xF0)) & 0xFFFF;
     }
     private get dmaDestinationAddr() {
-        return (((this.mmu.get(0xFF53) & 0xF) << 8) | (this.mmu.get(0xFF54) & 0xF0)) & 0xFFFF;
+        return (((this.mmu.io[0x53] & 0xF) << 8) | (this.mmu.io[0x54] & 0xF0)) & 0xFFFF;
     }
 
     public get hdma5()  {
         if (this.active) 
-            return (this.mmu.get(0xFF55) & 0x7F) & 0xFF; 
+            return (this.mmu.io[0x55] & 0x7F) & 0xFF; 
         else
-            return (this.mmu.get(0xFF55) | 0x80) & 0xFF;
+            return (this.mmu.io[0x55] | 0x80) & 0xFF;
     }
         
     public set hdma5(value: number) {
-        this.mmu.set(0xFF55, value); 
+        this.mmu.io[0x55] = value; 
     }
 
     private resetDMAFlags() {
-        this.mmu.set(0xFF51, 0xFF);
-        this.mmu.set(0xFF52, 0xFF);
-        this.mmu.set(0xFF53, 0xFF);
-        this.mmu.set(0xFF54, 0xFF);
-        this.mmu.set(0xFF55, 0xFF);
+        this.mmu.io[0x51] = 0xFF;
+        this.mmu.io[0x52] = 0xFF;
+        this.mmu.io[0x53] = 0xFF;
+        this.mmu.io[0x54] = 0xFF;
+        this.mmu.io[0x55] = 0xFF;
     }
 
     private get isHBlankDMAActive() {
         return this.active && (this.hdma5 & 0x80) !== 0x80 && 
-        this.mmu.get(0xFF51) !== 0xFF && this.mmu.get(0xFF52) != 0xFF &&
-        this.mmu.get(0xFF53) !== 0xFF && this.mmu.get(0xFF54) != 0xFF;
+        this.mmu.io[0x51] !== 0xFF && this.mmu.io[0x52] != 0xFF &&
+        this.mmu.io[0x53] !== 0xFF && this.mmu.io[0x54] != 0xFF;
     }
 
     public get vbk() {
-        return ((this.mmu.get(0xFF4F) & 0x1) === 0x1) && this.mmu.isInGBCMode;
+        return ((this.mmu.io[0x4F] & 0x1) === 0x1) && this.mmu.isInGBCMode;
     }
 
     public set vbk(value: boolean) { 
-        this.mmu.set(0xFF4F, (value ? 0x1 : 0x0)); 
+        this.mmu.io[0x4F] = (value ? 0x1 : 0x0); 
     }
         
     public get(index : number) {

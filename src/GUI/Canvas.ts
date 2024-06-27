@@ -4,10 +4,12 @@ export class Canvas {
 
     private canvas: HTMLCanvasElement;
     private context: CanvasRenderingContext2D;
+    private imageData : ImageData;
 
     constructor() {
         this.canvas = document.getElementById("canvas") as HTMLCanvasElement;
         this.context = this.canvas.getContext("2d") as CanvasRenderingContext2D;
+        this.imageData = new ImageData(1, 1);
     }
 
     public resize(width : number, height : number) {
@@ -28,13 +30,12 @@ export class Canvas {
 
         this.canvas.style.width = desW + "px";
         this.canvas.style.height = desH + "px";
+
+        this.imageData = new ImageData(width, height);
     }
 
-    public draw(frame: Framebuffer) {        
-        this.context.putImageData(
-            new ImageData(
-                new Uint8ClampedArray(frame.data), frame.width, frame.height
-            ), 0, 0
-        );
+    public draw(frame: Framebuffer) {
+        this.imageData.data.set(frame.data);
+        this.context.putImageData(this.imageData, 0, 0);
     }
 }

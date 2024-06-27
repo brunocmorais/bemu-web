@@ -39,6 +39,7 @@ export class Chip8 implements ISystem {
             return;
 
         this.cycles = cycleNumber;
+        this.state.draw = false;
         this.state.updateKeys(keys);
 
         if (this.state.delay > 0)
@@ -53,7 +54,7 @@ export class Chip8 implements ISystem {
         }
     }
 
-    public getCurrentFrame() {
+    public get framebuffer() {
         return this.ppu.framebuffer;
     }
 
@@ -72,5 +73,9 @@ export class Chip8 implements ISystem {
 
     public get height() {
         return height;
+    }
+
+    public get draw() {
+        return this.state.draw;
     }
 }

@@ -1,19 +1,26 @@
-import { Pixel } from "./Pixel";
-
 export class ScaledPixel {
 
-    private pixels: Pixel[];
+    private readonly pixels: number[][];
     public readonly scale: number;
 
-    constructor(scale: number, defaultValue?: Pixel) {
+    constructor(scale: number, defaultValue?: number) {
         this.scale = scale;
-        this.pixels = new Array<Pixel>(scale * scale);
+        this.pixels = new Array<number[]>(scale);
+
+        for (let i = 0; i < this.pixels.length; i++)
+            this.pixels[i] = new Array<number>(scale);
 
         if (defaultValue)
-            for (let i = 0; i < this.pixels.length; i++)
-                this.pixels[i] = defaultValue;
+            this.setAll(defaultValue);
     }
 
-    public get = (x: number, y: number) => this.pixels[y * this.scale + x];
-    public set = (x: number, y: number, value: Pixel) => this.pixels[y * this.scale + x] = value;
+    public get = (x: number, y: number) => this.pixels[y][x];
+    public set = (x: number, y: number, value: number) => this.pixels[y][x] = value;
+    
+    public setAll(value: number) {
+
+        for (let i = 0; i < this.pixels.length; i++)
+            for (let j = 0; j < this.pixels[i].length; j++)
+                this.pixels[i][j] = value;
+    }
 }

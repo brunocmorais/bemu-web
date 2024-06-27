@@ -17,7 +17,6 @@ class App {
     private static readonly fileList = new FilesList();
     private static system : ISystem;
     private static updateInterval : NodeJS.Timeout;
-    private static drawInterval : NodeJS.Timeout;
     private static filter : Filter;
 
     public static start() {
@@ -32,7 +31,8 @@ class App {
     }
 
     private static resize() {
-        App.canvas.resize(App.system.width, App.system.height);
+        if (App.system)
+            App.canvas.resize(App.system.width, App.system.height);
     }
 
     private static selectFile(event : Event) {
@@ -58,10 +58,7 @@ class App {
         if (!App.updateInterval)
             App.updateInterval = setInterval(App.update, 16);
 
-        if (!App.drawInterval)
-            App.drawInterval = setInterval(App.draw, 16);
-
-        const filter = FilterFactory.get(App.filter?.type ?? 0, App.system.width, App.system.height);
+        const filter = FilterFactory.get(App.filter?.type ?? 0, App.system.framebuffer);
         App.filter = filter;
 
         App.canvas.resize(filter.width, filter.height);
@@ -71,7 +68,7 @@ class App {
     private static selectFilter() {
 
         const filterType : FilterType = parseInt(Elements.filters.value);
-        const filter = FilterFactory.get(filterType, App.system.width, App.system.height);
+        const filter = FilterFactory.get(filterType, App.system.framebuffer);
         App.filter = filter;
         
         App.canvas.resize(filter.width, filter.height);
@@ -79,12 +76,26 @@ class App {
     }
 
     private static update() {
-        App.system.update(GamePad.keys);
-    }
 
-    private static draw() {
-        App.filter.frame = App.system.getCurrentFrame();
-        App.canvas.draw(App.filter.update());
+        const debug =  (document.querySelector("#debug") as HTMLElement);
+
+        let d1 = performance.now();
+        App.system.update(GamePad.keys);
+        let d2 = performance.now();
+        
+        debug.innerText = " Update: " + (d2 - d1).toFixed(2).toString();
+
+        d1 = performance.now();
+
+        if (App.system.draw)
+            App.filter.update();
+
+        d2 = performance.now();
+
+        if (App.system.draw)
+            App.canvas.draw(App.filter.scaled);
+        
+        debug.innerText += " Scaler: " + (d2 - d1).toFixed(2).toString();
     }
 
     private static pause() {
@@ -98,8 +109,7 @@ class App {
     }
 
     private static onCapture(type: ImageType) {
-        App.filter.frame = App.system.getCurrentFrame();
-        const image = ImageFactory.get(type, App.filter.update());
+        const image = ImageFactory.get(type, App.filter._scaled);
         const a = document.createElement("a");
         const fileName = `screenshot_${new Date().toISOString()}${image.extension}`;
 

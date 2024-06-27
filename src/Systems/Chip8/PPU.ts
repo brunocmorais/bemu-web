@@ -42,11 +42,11 @@ export class PPU {
             return this._framebuffer.get((x * 2) + 1, (y * 2) + 1);
     }
 
-    private set(x: number, y: number, value: Pixel) {
+    private set(x: number, y: number, pixel: Pixel) {
         if (this.state.superChipMode)
-            this._framebuffer.set(x, y, value);
+            this._framebuffer.set(x, y, pixel);
         else
-            this._framebuffer.setScaledPixel(new ScaledPixel(2, value), x, y);
+            this._framebuffer.setScaledPixel(new ScaledPixel(2, pixel.value), x, y);
     }
 
     public drw(x: number, y: number, n: number) {

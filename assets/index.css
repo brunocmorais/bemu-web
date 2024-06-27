@@ -90,3 +90,11 @@ label {
         width: 100%;
     }
 }
+
+#debug {
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: white;
+    font-size: 10px;
+}

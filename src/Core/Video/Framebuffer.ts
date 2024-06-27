@@ -26,7 +26,7 @@ export class Framebuffer {
         return this._height;
     }
 
-    private getIndex = (x: number, y: number) => (y * this.width * 4) + (x * 4);
+    private getIndex = (x: number, y: number) => (y * this._width * 4) + (x * 4);
 
     public clear() {
         for (let i = 0; i < this.width; i++)
@@ -35,30 +35,49 @@ export class Framebuffer {
     }
 
     public get(x: number, y: number) {
-        const start = this.getIndex(x, y);
-        return new Pixel(((this.data[start] << 24) | (this.data[start + 1] << 16) | (this.data[start + 2] << 8) | (this.data[start + 3])) >>> 0);
+        let start = this.getIndex(x, y);
+        return new Pixel(((this.data[start++] << 24) | (this.data[start++] << 16) | (this.data[start++] << 8) | (this.data[start++])) >>> 0);
+    }
+
+    public getNumber(x: number, y: number) {
+        let start = this.getIndex(x, y);
+        return ((this._data[start++] << 24) | (this._data[start++] << 16) | (this._data[start++] << 8) | (this._data[start++])) >>> 0;
+    }
+
+    public getNumberByOffset(start : number) {
+        return ((this._data[start++] << 24) | (this._data[start++] << 16) | (this._data[start++] << 8) | (this._data[start++])) >>> 0;
     }
 
     public set(x: number, y: number, pixel: Pixel) {
-        const start = this.getIndex(x, y);
+        let start = this.getIndex(x, y);
 
-        this.data[start]     = pixel.R;
-        this.data[start + 1] = pixel.G;
-        this.data[start + 2] = pixel.B;
-        this.data[start + 3] = pixel.A;
+        this.data[start++] = pixel.R;
+        this.data[start++] = pixel.G;
+        this.data[start++] = pixel.B;
+        this.data[start++] = pixel.A;
+    }
+
+    public setNumber(x: number, y: number, pixel: number) {
+        let start = this.getIndex(x, y);
+
+        this.data[start++] = ((pixel & 0xFF000000) >> 24) >>> 0;
+        this.data[start++] = ((pixel & 0x00FF0000) >> 16);
+        this.data[start++] = ((pixel & 0x0000FF00) >> 8);
+        this.data[start++] = ((pixel & 0x000000FF));
     }
 
     public setScanline(x: number, y: number, pixels: number[]) {
         const start = this.getIndex(x, y);
 
         for (let i = 0; i < pixels.length; i++) {
-            const padding = i * 4;
+            let padding = i * 4;
+            let addr = start + padding;
             const pixel = pixels[i];
 
-            this.data[start + padding]     = ((pixel & 0xFF000000) >> 24) >>> 0;
-            this.data[start + padding + 1] = ((pixel & 0x00FF0000) >> 16);
-            this.data[start + padding + 2] = ((pixel & 0x0000FF00) >> 8);
-            this.data[start + padding + 3] = ((pixel & 0x000000FF));
+            this.data[addr++] = ((pixel & 0xFF000000) >> 24) >>> 0;
+            this.data[addr++] = ((pixel & 0x00FF0000) >> 16);
+            this.data[addr++] = ((pixel & 0x0000FF00) >> 8);
+            this.data[addr++] = ((pixel & 0x000000FF));
         }
     }
 
@@ -67,22 +86,29 @@ export class Framebuffer {
         const width = this.width;
 
         for (let i = 0; i < pixels.length; i++) {
-            const padding = i * width * 4;
+            let padding = i * width * 4;
+            let addr = start + padding;
             const pixel = pixels[i];
 
-            this.data[start + padding]     = ((pixel & 0xFF000000) >> 24) >>> 0;
-            this.data[start + padding + 1] = ((pixel & 0x00FF0000) >> 16);
-            this.data[start + padding + 2] = ((pixel & 0x0000FF00) >> 8);
-            this.data[start + padding + 3] = ((pixel & 0x000000FF));
+            this.data[addr++] = ((pixel & 0xFF000000) >> 24) >>> 0;
+            this.data[addr++] = ((pixel & 0x00FF0000) >> 16);
+            this.data[addr++] = ((pixel & 0x0000FF00) >> 8);
+            this.data[addr++] = ((pixel & 0x000000FF));
         }
     }
 
     public setScaledPixel(pixel: ScaledPixel, x: number, y: number) {
         const scale = pixel.scale;
+        const xScale = x * scale;
+        const yScale = y * scale;
 
-        for (let i = 0; i < scale; i++)
-            for (let j = 0; j < scale; j++)
-                this.set(i + (x * scale), j + (y * scale), pixel.get(i, j));
+        for (let i = 0; i < scale; i++) {
+            const index = i + xScale;
+
+            for (let j = 0; j < scale; j++) {
+                this.setNumber(index, j + yScale, pixel.get(i, j));
+            }
+        }
     }
 
     public setSquarePixel(pixels: number[], scale: number, x: number, y: number) {
@@ -90,12 +116,12 @@ export class Framebuffer {
         for (let i = 0; i < scale; i++) {
             for (let j = 0; j < scale; j++) {
                 const pixel = pixels[j * scale + i];
-                const start = this.getIndex(i + (x * scale), j + (y * scale));
+                let start = this.getIndex(i + (x * scale), j + (y * scale));
 
-                this.data[start]     = ((pixel & 0xFF000000) >> 24) >>> 0;
-                this.data[start + 1] = ((pixel & 0x00FF0000) >> 16);
-                this.data[start + 2] = ((pixel & 0x0000FF00) >> 8);
-                this.data[start + 3] = ((pixel & 0x000000FF));
+                this.data[start++] = ((pixel & 0xFF000000) >> 24) >>> 0;
+                this.data[start++] = ((pixel & 0x00FF0000) >> 16);
+                this.data[start++] = ((pixel & 0x0000FF00) >> 8);
+                this.data[start++] = ((pixel & 0x000000FF));
             }
         }
     }
